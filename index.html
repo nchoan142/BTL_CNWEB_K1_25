@@ -1,71 +1,49 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Ex4</title>
-        <link rel="stylesheet" href="style.css">
-        <meta charset="UTF-8">
-    </head>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hotel Booking</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>🏨 Sunshine Hotel</h1>
+    <p>Đặt phòng dễ dàng – nghỉ dưỡng thoải mái</p>
+  </header>
 
-    <body>
-    <form>
-        <fieldset>
-            <legend>Form đăng ký sản phẩm</legend>
-            <table bgcolor="limegreen" cellpadding="5">
-                <tr>
-                    <td>Họ tên:</td>
-                    <td>
-                        <input type="text" name="txthoten" size="30" />
-                        <input type="hidden" name="txtma" size="30" />
-                    </td>
-                </tr>
-                <tr>
-                    <td>Mật khẩu:</td>
-                    <td><input type="password" name="txtmatkhau" /></td>
-                </tr>
-                <tr>
-                    <td>Giới tính:</td>
-                    <td>
-                        <input type="radio" name="rdogioitinh" value="nam" /> Nam
-                        <input type="radio" name="rdogioitinh" value="nu" /> Nữ
-                    </td>
-                </tr>
-                <tr>
-                    <td>Sở thích:</td>
-                    <td>
-                        <input type="checkbox" name="chkhobbies" value="dulich" /> Du lịch
-                        <input type="checkbox" name="chkhobbies" value="thethao" /> Thể thao
-                        <input type="checkbox" name="chkhobbies" value="villa" /> Biệt thự view hồ
-                        <input type="checkbox" name="chkhobbies" value="seafood" /> Seafood
-                    </td>
-                </tr>
-                <tr>
-                    <td>Hạng thẻ:</td>
-                    <td>
-                        <select name="cbohangthe">
-                            <option value="silver">Silver</option>
-                            <option value="gold">Gold</option>
-                            <option value="platinum">Platinum</option>
-                            <option value="diamond">Diamond</option>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td>Hình ảnh:</td>
-                    <td><input type="file" name="avatar" /></td>
-                </tr>
-                <tr>
-                    <td valign="top">Địa chỉ:</td>
-                    <td><textarea cols="30" rows="5" name="txtdiachi"></textarea></td>
-                </tr>
-                <tr>
-                    <td align="center" colspan="2"> 
-                        <input type="submit" value="Đăng ký" />
-                        <input type="reset" value="Nhập lại" />
-                    </td>
+  <section class="booking-form">
+    <h2>Đặt Phòng Ngay</h2>
+    <form id="bookingForm">
+      <label for="name">Họ và tên:</label>
+      <input type="text" id="name" required>
 
-                </tr>
-            </table>
-        </fieldset>
+      <label for="checkin">Ngày nhận phòng:</label>
+      <input type="date" id="checkin" required>
+
+      <label for="checkout">Ngày trả phòng:</label>
+      <input type="date" id="checkout" required>
+
+      <label for="guests">Số lượng khách:</label>
+      <input type="number" id="guests" min="1" value="1" required>
+
+      <label for="roomType">Loại phòng:</label>
+      <select id="roomType">
+        <option value="standard">Standard - 500,000đ/đêm</option>
+        <option value="deluxe">Deluxe - 800,000đ/đêm</option>
+        <option value="suite">Suite - 1,200,000đ/đêm</option>
+      </select>
+
+      <button type="submit">Đặt phòng</button>
     </form>
+
+    <div id="result" class="result"></div>
+  </section>
+
+  <footer>
+    <p>📍 Địa chỉ: 123 Nguyễn Huệ, TP.HCM | ☎️ 0123 456 789</p>
+  </footer>
+
+  <script src="script.js"></script>
 </body>
 </html>
