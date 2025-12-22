@@ -17,42 +17,64 @@ const Payment = () => {
   // State phương thức thanh toán (chỉ dùng khi chọn 'now')
   const [method, setMethod] = useState('qr'); // qr, momo, paypal
 
+  // --- SỬA LỖI TẠI ĐÂY (THÊM ASYNC/AWAIT) ---
   useEffect(() => {
-    const data = bookingService.getById(bookingId);
-    if (data) {
-      setBooking(data);
-    } else {
-      toast.error("Không tìm thấy đơn hàng!");
-      navigate('/rooms');
-    }
-  }, [bookingId, navigate]);
+    const fetchBookingData = async () => {
+        try {
+            // Thêm await để chờ dữ liệu từ Server
+            const data = await bookingService.getById(bookingId);
+            
+            if (data) {
+                setBooking(data);
+            } else {
+                toast.error("Không tìm thấy đơn hàng!");
+                navigate('/rooms');
+            }
+        } catch (error) {
+            console.error("Lỗi tải đơn hàng:", error);
+            navigate('/rooms');
+        }
+    };
 
-  if (!booking) return <div>Loading...</div>;
+    fetchBookingData();
+  }, [bookingId, navigate]);
+  // ------------------------------------------
+
+  if (!booking) return (
+    <div className="d-flex justify-content-center align-items-center" style={{height: '100vh'}}>
+        <div className="spinner-border text-primary" role="status">
+            <span className="sr-only">Loading...</span>
+        </div>
+    </div>
+  );
 
   // Tính toán giá (Dựa trên tổng tiền đã tính ở bước Booking)
-  // booking.price lúc này là TỔNG TIỀN (đã nhân số đêm, số phòng bên Booking.jsx)
   const originalPrice = parseInt(booking.price); 
   const discountAmount = originalPrice * 0.05; // 5%
   const discountedPrice = originalPrice - discountAmount;
 
-  const handleConfirm = () => {
+  // --- SỬA HÀM XÁC NHẬN (THÊM ASYNC/AWAIT & CHUYỂN VỀ HISTORY) ---
+  const handleConfirm = async () => {
     if (paymentOption === 'now') {
       // Logic thanh toán ngay
-      bookingService.updateStatus(booking.id, 'Paid', method, discountedPrice);
+      await bookingService.updateStatus(booking.id, 'Paid', method, discountedPrice);
       toast.success(`Thanh toán thành công qua ${method.toUpperCase()}!`);
     } else {
       // Logic thanh toán sau
-      bookingService.updateStatus(booking.id, 'Pay at Hotel', 'Cash', originalPrice);
+      await bookingService.updateStatus(booking.id, 'Pay at Hotel', 'Cash', originalPrice);
       toast.info("Đã xác nhận! Vui lòng thanh toán khi nhận phòng.");
     }
-    navigate('/'); // Về trang chủ
+    
+    // Chuyển hướng về trang Lịch sử để khách xem vé đã đặt
+    navigate('/history'); 
   };
+  // ---------------------------------------------------------------
 
   return (
     <>
       <Header />
       <div className="container" style={{marginTop: '150px', marginBottom: '100px'}}>
-        <h2 className="text-center mb-4">Thanh Toán & Xác Nhận</h2>
+        <h2 className="text-center mb-4 text-lobster" style={{color: '#736de9ff', fontSize: '40px'}}>Thanh Toán & Xác Nhận</h2>
 
         <div className="row">
           {/* Cột trái: Thông tin đơn hàng */}
@@ -63,10 +85,9 @@ const Payment = () => {
                 <p><strong>Phòng:</strong> {booking.roomName}</p>
                 <p><strong>Khách hàng:</strong> {booking.customer.fullName}</p>
                 
-                {/* --- CẬP NHẬT NGÀY CHECK-IN & CHECK-OUT TỪ FORM --- */}
+                {/* Hiển thị ngày check-in/out */}
                 <p><strong>Check-in:</strong> {booking.customer.checkIn}</p>
                 <p><strong>Check-out:</strong> {booking.customer.checkOut}</p>
-                {/* -------------------------------------------------- */}
                 
                 <hr />
                 <p><strong>Giá gốc:</strong> ${originalPrice}</p>
@@ -151,7 +172,7 @@ const Payment = () => {
                       
                       {method === 'momo' && (
                         <div>
-                           <img src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png" alt="Momo" style={{width: '80px'}} />
+                           <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-MoMo-Circle.png" alt="Momo" style={{width: '80px'}} />
                            <p className="mt-2">Mở ứng dụng MoMo để quét mã hoặc chuyển khoản.</p>
                         </div>
                       )}
