@@ -1,3 +1,6 @@
+CREATE DATABASE IF NOT EXISTS hotel_db;
+USE hotel_db;
+
 -- 1. XÓA SẠCH DỮ LIỆU CŨ
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS `bookings`;
