@@ -11,7 +11,6 @@ const Booking = () => {
   const navigate = useNavigate();
   const [room, setRoom] = useState(null);
 
-  // Thêm checkIn, checkOut vào state
   const [formData, setFormData] = useState({
     fullName: '',
     age: '',
@@ -19,39 +18,55 @@ const Booking = () => {
     email: '',
     peopleCount: 1,
     roomCount: 1,
-    checkIn: '',  // Mới
-    checkOut: '', // Mới
+    checkIn: '',
+    checkOut: '',
     requests: ''
   });
 
   const [errors, setErrors] = useState({});
-  const [totalPrice, setTotalPrice] = useState(0); // State lưu tổng tiền tạm tính
+  const [totalPrice, setTotalPrice] = useState(0);
 
+  // --- SỬA LỖI TRANG TRẮNG TẠI ĐÂY ---
   useEffect(() => {
-    const allRooms = roomService.getAll();
-    const foundRoom = allRooms.find(r => r.id === parseInt(roomId));
-    if (foundRoom) {
-      setRoom(foundRoom);
-      setTotalPrice(foundRoom.price); // Giá mặc định 1 đêm
-    } else {
-      toast.error("Phòng không tồn tại!");
-      navigate('/rooms');
-    }
-  }, [roomId, navigate]);
+    const fetchRoomData = async () => {
+        try {
+            // Thêm 'await' để chờ lấy dữ liệu từ Server về
+            const allRooms = await roomService.getAll(); 
+            
+            // Kiểm tra xem dữ liệu trả về có phải mảng không để tránh lỗi
+            if (Array.isArray(allRooms)) {
+                const foundRoom = allRooms.find(r => r.id === parseInt(roomId));
+                if (foundRoom) {
+                    setRoom(foundRoom);
+                    setTotalPrice(foundRoom.price);
+                } else {
+                    toast.error("Không tìm thấy phòng!");
+                    navigate('/rooms');
+                }
+            }
+        } catch (error) {
+            console.error("Lỗi tải phòng:", error);
+        }
+    };
 
-  // Hàm tính lại tổng tiền mỗi khi ngày hoặc số lượng phòng thay đổi
+    fetchRoomData();
+  }, [roomId, navigate]);
+  // ------------------------------------
+
+  // Tính toán lại tổng tiền khi thay đổi ngày hoặc số phòng
   useEffect(() => {
     if (room && formData.checkIn && formData.checkOut && formData.roomCount) {
         const start = new Date(formData.checkIn);
         const end = new Date(formData.checkOut);
         
-        // Tính số ngày chênh lệch
+        // Tính số ngày
         const diffTime = Math.abs(end - start);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
 
         if (diffDays > 0) {
-            // Tổng = Giá phòng * Số đêm * Số phòng
             setTotalPrice(room.price * diffDays * formData.roomCount);
+        } else {
+            setTotalPrice(room.price); // Nếu chọn sai ngày (checkin = checkout) thì tính 1 ngày
         }
     }
   }, [formData.checkIn, formData.checkOut, formData.roomCount, room]);
@@ -59,7 +74,7 @@ const Booking = () => {
   const validate = () => {
     const newErrors = {};
     const today = new Date();
-    today.setHours(0,0,0,0); // Reset giờ về 0 để so sánh ngày
+    today.setHours(0,0,0,0);
 
     if (!formData.fullName) newErrors.fullName = "Vui lòng nhập họ tên";
     if (!formData.age || formData.age < 18) newErrors.age = "Phải trên 18 tuổi";
@@ -68,7 +83,6 @@ const Booking = () => {
     if (!formData.peopleCount || formData.peopleCount < 1) newErrors.peopleCount = "Ít nhất 1 người";
     if (!formData.roomCount || formData.roomCount < 1) newErrors.roomCount = "Ít nhất 1 phòng";
 
-    // --- Validate Ngày ---
     if (!formData.checkIn) {
         newErrors.checkIn = "Chọn ngày nhận phòng";
     } else if (new Date(formData.checkIn) < today) {
@@ -85,25 +99,27 @@ const Booking = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => { // Thêm async ở đây cho chắc chắn
     e.preventDefault();
     if (!validate()) {
         toast.warning("Vui lòng kiểm tra lại thông tin nhập vào!");
         return;
     }
 
-    // Gọi API lưu booking
-    const result = bookingService.book({
+    // Gọi API lưu booking (Hàm này trong api.js đã xử lý map dữ liệu)
+    const result = await bookingService.book({
       roomId: room.id,
       roomName: room.name,
-      // Lưu giá tổng đã tính toán (thay vì giá gốc 1 đêm)
       price: totalPrice, 
       customer: formData
     });
 
     if (result.success) {
       toast.success("Đã ghi nhận đơn! Đang chuyển trang thanh toán...");
+      // Chuyển hướng đến trang thanh toán với ID booking vừa tạo
       navigate(`/payment/${result.booking.id}`);
+    } else {
+      toast.error(result.message || "Lỗi đặt phòng, vui lòng thử lại.");
     }
   };
 
@@ -111,7 +127,13 @@ const Booking = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  if (!room) return <div>Loading...</div>;
+  if (!room) return (
+    <div className="d-flex justify-content-center align-items-center" style={{height: '100vh'}}>
+        <div className="spinner-border text-primary" role="status">
+            <span className="sr-only">Loading...</span>
+        </div>
+    </div>
+  );
 
   return (
     <>
@@ -129,13 +151,14 @@ const Booking = () => {
                     <div className="section-heading text-center">
                         <div className="line-"></div>
                         <h2>Đặt phòng: {room.name}</h2>
-                        <h4 className="mt-2" style={{ color: '#8597f1ff', fontWeight: 'bold', fontSize: '24px' }}>Chi phí dự kiến: ${totalPrice}
-</h4>
+                        <h4 className="mt-2" style={{ color: '#8597f1ff', fontWeight: 'bold', fontSize: '24px' }}>
+                            Chi phí dự kiến: ${totalPrice}
+                        </h4>
                     </div>
 
                     <form onSubmit={handleSubmit} className="p-4" style={{background: '#f8f9fa', borderRadius: '5px'}}>
                         <div className="row">
-                            {/* --- Hàng 1: Checkin - Checkout (MỚI) --- */}
+                            {/* --- Hàng 1: Checkin - Checkout --- */}
                             <div className="col-md-6 mb-3">
                                 <label>Ngày nhận phòng (Check-in) <span className="text-danger">*</span></label>
                                 <input 
@@ -157,7 +180,7 @@ const Booking = () => {
                                 {errors.checkOut && <small className="text-danger">{errors.checkOut}</small>}
                             </div>
 
-                            {/* --- Các thông tin cũ --- */}
+                            {/* --- Các thông tin khách hàng --- */}
                             <div className="col-md-6 mb-3">
                                 <label>Họ và tên <span className="text-danger">*</span></label>
                                 <input type="text" className={`form-control ${errors.fullName ? 'is-invalid' : ''}`} name="fullName" onChange={handleChange} />
