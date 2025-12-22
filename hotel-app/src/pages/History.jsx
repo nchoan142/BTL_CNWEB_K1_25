@@ -12,16 +12,29 @@ const History = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const currentUser = authService.getCurrentUser();
-    if (!currentUser) {
-      toast.warning("Vui lòng đăng nhập để xem lịch sử!");
-      navigate('/login');
-      return;
-    }
-    setUser(currentUser);
-    const history = bookingService.getHistory(currentUser.username);
-    const sortedHistory = history.sort((a, b) => b.id - a.id);
-    setMyBookings(sortedHistory);
+    // Tạo hàm async riêng để gọi API
+    const fetchData = async () => {
+        const currentUser = authService.getCurrentUser();
+        if (!currentUser) {
+            toast.warning("Vui lòng đăng nhập để xem lịch sử!");
+            navigate('/login');
+            return;
+        }
+        setUser(currentUser);
+
+        // Thêm 'await' để chờ lấy xong dữ liệu từ Server
+        const historyData = await bookingService.getHistory();
+        
+        // Kiểm tra nếu là mảng thì mới sort
+        if (Array.isArray(historyData)) {
+            const sortedHistory = historyData.sort((a, b) => b.id - a.id);
+            setMyBookings(sortedHistory);
+        } else {
+            setMyBookings([]);
+        }
+    };
+
+    fetchData(); // Gọi hàm chạy
   }, [navigate]);
 
   const getStatusBadge = (status) => {
@@ -63,11 +76,10 @@ const History = () => {
                             alt="User Avatar" 
                             style={{width: '80px', marginBottom: '10px'}}
                         />
-                        <h4 style={{color: 'var(--accent-pink)', fontSize: '20px'}}>{user.username}</h4>
+                        <h4 style={{color: '#cb8670', fontSize: '20px'}}>{user.username}</h4>
                         <p className="text-muted"><small>Thành viên thân thiết</small></p>
                         <hr/>
                         
-                        {/* ĐÃ XÓA PHẦN ĐIỂM THƯỞNG, CHỈ GIỮ LẠI SỐ LẦN ĐẶT */}
                         <div className="text-center">
                             <h2 style={{color: '#FFD700', fontWeight: 'bold', fontSize: '50px'}}>
                                 {myBookings.length}
@@ -80,23 +92,27 @@ const History = () => {
             </div>
             
             <div className="col-12 col-md-8">
-                <div className="card shadow-sm h-100" style={{border: '1px solid var(--border-color)'}}>
+                <div className="card shadow-sm h-100" style={{border: '1px solid #eee'}}>
                     <div className="card-header bg-white">
                         <h5 className="mb-0">Thông tin tài khoản hệ thống</h5>
                     </div>
                     <div className="card-body">
                         <div className="row">
                             <div className="col-md-6 mb-3">
-                                <small className="text-muted">Tên đăng nhập:</small>
-                                <p className="font-weight-bold">{user.username}</p>
+                                <small className="text-muted">Họ và tên:</small>
+                                <p className="font-weight-bold">{user.full_name || user.username}</p>
+                            </div>
+                            <div className="col-md-6 mb-3">
+                                <small className="text-muted">Email:</small>
+                                <p>{user.email || "Chưa cập nhật"}</p>
+                            </div>
+                            <div className="col-md-6 mb-3">
+                                <small className="text-muted">Số điện thoại:</small>
+                                <p>{user.phone || "Chưa cập nhật"}</p>
                             </div>
                             <div className="col-md-6 mb-3">
                                 <small className="text-muted">Vai trò:</small>
                                 <p>{user.role === 'admin' ? 'Quản trị viên' : 'Khách hàng'}</p>
-                            </div>
-                            <div className="col-md-6 mb-3">
-                                <small className="text-muted">Trạng thái:</small><br/>
-                                <span className="badge badge-success">Đang hoạt động</span>
                             </div>
                         </div>
                     </div>
@@ -107,19 +123,18 @@ const History = () => {
         {/* --- BẢNG LỊCH SỬ --- */}
         <div className="row">
             <div className="col-12">
-                <h3 className="mb-4" style={{fontFamily: 'Lobster, cursive', color: '#596be3ff'}}>
+                <h3 className="mb-4" style={{fontFamily: 'Lobster, cursive', color: '#596be3'}}>
                     Lịch sử đặt phòng của bạn
                 </h3>
                 
                 {myBookings.length > 0 ? (
                     <div className="table-responsive">
                         <table className="table table-bordered table-hover shadow-sm">
-                            <thead style={{backgroundColor: 'var(--primary-color)'}}>
+                            <thead style={{backgroundColor: '#f8f9fa'}}>
                                 <tr>
                                     <th>Mã Đơn</th>
                                     <th>Thời gian lưu trú</th>
                                     <th>Phòng & Giá</th>
-                                    <th>Khách hàng (Người ở)</th>
                                     <th>Trạng thái</th>
                                 </tr>
                             </thead>
@@ -129,30 +144,20 @@ const History = () => {
                                         <td className="align-middle"><strong>#{item.id}</strong></td>
                                         
                                         <td className="align-middle" style={{minWidth: '160px'}}>
-                                            <small className="text-muted">Ngày đặt: {item.date}</small>
-                                            <hr style={{margin: '5px 0'}}/>
                                             <small>Check-in:</small> <strong>{item.customer.checkIn}</strong><br/>
                                             <small>Check-out:</small> <strong>{item.customer.checkOut}</strong>
                                         </td>
 
                                         <td className="align-middle">
-                                            <span style={{fontWeight: 'bold', color: 'var(--accent-pink)', fontSize: '16px'}}>
+                                            <span style={{fontWeight: 'bold', color: '#cb8670', fontSize: '16px'}}>
                                                 {item.roomName}
                                             </span>
-                                            <br/>
-                                            <small>{item.customer.roomCount} phòng - {item.customer.peopleCount} người</small>
                                             <br/>
                                             {item.finalPrice ? (
                                                 <strong className="text-success">${item.finalPrice}</strong>
                                             ) : (
-                                                <span>Đang chờ...</span>
+                                                <span>Liên hệ</span>
                                             )}
-                                        </td>
-
-                                        <td className="align-middle">
-                                            <strong>{item.customer.fullName}</strong><br/>
-                                            <small>{item.customer.phone}</small><br/>
-                                            <small className="text-muted">{item.customer.email}</small>
                                         </td>
 
                                         <td className="align-middle">{getStatusBadge(item.status)}</td>
