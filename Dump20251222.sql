@@ -1,7 +1,7 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0; -- (Dòng này thường có sẵn)
-CREATE DATABASE IF NOT EXISTS hotel_db;
-USE hotel_db;
+CREATE DATABASE IF NOT EXISTS hotel_db_trang;
+USE hotel_db_trang;
 
 -- 1. XÓA SẠCH DỮ LIỆU CŨ
 SET FOREIGN_KEY_CHECKS = 0;
