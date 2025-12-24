@@ -2,10 +2,9 @@
 const mysql = require('mysql2');
 
 const pool = mysql.createPool({
-    // Nếu có biến môi trường DB_HOST (từ Docker) thì dùng, không thì dùng localhost
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASS || '290605', // Pass máy thật của bạn
+    password: process.env.DB_PASS || '123456',
     database: process.env.DB_NAME || 'hotel_db',
     waitForConnections: true,
     connectionLimit: 10,
